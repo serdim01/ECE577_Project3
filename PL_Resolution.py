@@ -129,9 +129,7 @@ def PLResolve(Ci, Cj):
         
 
 def PLResolution(KB, alpha):
-    alpha_parsed = parseKB(alpha)
-    for i in range(0, len(alpha)):
-        KB.append(alpha_parsed[i])
+    KB.append(alpha)
     clauses = KB
     iteration_count = 0;
     while True:
@@ -166,16 +164,17 @@ def PLResolution(KB, alpha):
                        
 def main():
     ## Run this 
-    # KB = getKB()
-    # print("Initial Knowledge Base is:")
-    #alpha = input("Enter negated alpha: ")
-    KB = ["~pvq", "p"]
-    KB_list = parseKB(KB)
-    for items in KB_list:
-        items.sort()
-    printKB_list(KB_list)
-    alpha = ["~q"]
+    KB = getKB()
+    print("Initial Knowledge Base is:")
+    alpha = input("Enter negated alpha: ")
+    KB_list = []
+    alpha = alpha.split("v")
+    for items in KB:
+        item = items.split("v")
+        item.sort()
+        KB_list.append(item)   
     PLResolution(KB_list, alpha)
+    
     
 if __name__ == '__main__':
     main()
