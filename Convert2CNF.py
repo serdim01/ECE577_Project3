@@ -70,6 +70,7 @@ class Tree(object):
 def postfixToTree(postFix):
     stack = []
     PostFixTree = []
+    flag = 0;
     for chars in postFix:
         if (precedence(chars) == 0): 
             stack.append(chars)
@@ -83,12 +84,22 @@ def postfixToTree(postFix):
                 else:
                     right = stack.pop(-1)
                     PostFixTree.append(Tree(chars))
-                    PostFixTree[-1].children.append(Tree(right))
                     PostFixTree[-1].children.append(Tree(left))
+                    PostFixTree[-1].children.append(Tree(right))
             else:
                 if chars == '~':
-                    PostFixTree.append(Tree(chars)) 
-                    PostFixTree[-1].children.append(PostFixTree[-2])
+                    if len(stack) == 1:
+                        left = stack.pop(-1)
+                        PostFixTree.append(Tree(chars)) 
+                        PostFixTree[-1].children.append(Tree(left))
+                        flag = 1;
+                    elif (flag==1) and (len(stack) == 0):
+                        PostFixTree.append(Tree(chars)) 
+                        PostFixTree[-1].children.append((PostFixTree[-2]))
+                        flag = 0
+                    else:
+                        PostFixTree.append(Tree(chars)) 
+                        PostFixTree[-1].children.append((PostFixTree[-2]))
                 elif len(stack) == 0:
                     PostFixTree.append(Tree(chars)) 
                     PostFixTree[-1].children.append((PostFixTree[-2]))
@@ -103,8 +114,8 @@ def postfixToTree(postFix):
                     left = stack.pop(-1)
                     right = stack.pop(-1)
                     PostFixTree.append(Tree(chars))
-                    PostFixTree[-1].children.append(Tree(right))
                     PostFixTree[-1].children.append(Tree(left))
+                    PostFixTree[-1].children.append(Tree(right))
         
     return PostFixTree
 
@@ -122,8 +133,12 @@ def TreeTraversalIFF(TreeItem):
             current = removeIFF(current)
         elif(stack):
             current = stack.pop()
-            current = current.children[1]
-            current = removeIFF(current)
+            if len(current.children) > 1:    
+                current = current.children[1]
+                current = removeIFF(current)
+            else:
+                current = current.children[0]
+                current = removeIFF(current)
         else:
             break
     return TreeItem
@@ -134,8 +149,7 @@ def TreeTraversalIMP(TreeItem):
     stack = []
     # Changing Root Directly
     current = removeIMP(current)
-    print("---------------------------------")
-    printTree(TreeItem, level=0)
+
     while True:
         if current.is_leaf() is not True:
             # Appending with reference?
@@ -144,18 +158,145 @@ def TreeTraversalIMP(TreeItem):
             current = removeIMP(current)
         elif(stack):
             current = stack.pop()
-            current = current.children[1]
-            current = removeIMP(current)
+            if len(current.children) > 1:    
+                current = current.children[1]
+                current = removeIMP(current)
+            else:
+                current = current.children[0]
+                current = removeIMP(current)
         else:
             break
+    return TreeItem
+
+def DistributeOR(TreeItem):
+    # Reference to root
+    current = TreeItem
+    stack = []
+    # Changing Root Directly
+    current = distOR(current)
+
+    while True:
+        # print("---------------------------------")
+        # printTree(TreeItem, level=0)
+        if current.is_leaf() is not True:
+            # Appending with reference?
+            stack.append(current)
+            current = current.children[0]
+            current = distOR(current)
+        elif(stack):
+            current = stack.pop()
+            if len(current.children) > 1:    
+                current = current.children[1]
+                current = distOR(current)
+            else:
+                current = current.children[0]
+                current = removeIMP(current)
+        else:
+            break
+    return TreeItem
+
+def distOR(TreeIn):
+    if (TreeIn.data == '|') and (TreeIn.children[1].data == "^") and (TreeIn.children[0].data == "^"):
+        TreeIn.data = "^"
+        TreeIn.children[0].data = "|"
+        TreeIn.children[1].data = "|"
+    elif (TreeIn.data == '|') and (TreeIn.children[0].data == "^"):
+        TreeIn.data = "^"
+        TreeIn.children[0].data = "|"
+        TreeIn.children[0]
+    elif (TreeIn.data == '|') and (TreeIn.children[1].data == "^"):
+        TreeIn.data = "^"
+        TreeIn.children[1].data = "|"
+    return TreeIn
+def TreeTraversalNEG(TreeItem):
+    # Reference to root
+    current = TreeItem
+    stack = []
+    # Changing Root Directly
+    current = removeNEG(current)
+    # print("---------------------------------")
+    # printTree(TreeItem, level=0)
+    while True:
+        # print("--------------START--------------")
+        # printTree(TreeItem, level=0)
+        if current != []:
+            if current.is_leaf() is not True:
+            # Appending with reference?
+                stack.append(current)
+                current = current.children[0]
+                current = removeNEG(current)
+            elif (stack):
+                current = stack.pop()
+                if len(current.children) > 1:    
+                    current = current.children[1]
+                    current = removeNEG(current)
+                else:
+                    current = current.children[0]
+                    current = removeNEG(current)
+            else:
+                break
+        elif (stack):
+            current = stack.pop(0)
+            if len(current.children) > 1:    
+                current = current.children[1]
+                current = removeNEG(current)
+            else:
+                current = current.children[0]
+                current = removeNEG(current)
+        else:
+            break
+        # print("--------------AFTER--------------")
+        # printTree(TreeItem, level=0)
     return TreeItem
 
 def removeIMP(TreeIn):
     if TreeIn.data == '>':
         TreeIn.data = "|"
-        alpha = TreeIn.children[0].data
-        TreeIn.children[0].data = "~"+alpha
+        alpha = list(TreeIn.children)
+        TreeIn.children[1].data = "~"+alpha[1].data
     return TreeIn
+
+def removeNEG(TreeIn):
+    if TreeIn != []:
+        if TreeIn.data == '~~':
+            TreeIn.data = TreeIn.children[0].data
+            TreeIn.children = list(TreeIn.children[0].children)
+        elif (TreeIn.data[0] == '~'):
+            if TreeIn.data == '~~':
+                TreeIn.data = TreeIn.children[0].data
+                TreeIn.children = list(TreeIn.children[0].children)
+            if len(TreeIn.data) > 1:
+                if TreeIn.data[1].isalnum() is False:
+                    if (TreeIn.data[1] == '|'):
+                            TreeIn.data = '^'
+                            TreeIn.children = list(TreeIn.children)
+                            for kiddos in TreeIn.children:
+                                if (kiddos.data[0] == "~") and (kiddos.data[1] == "~") and (len(kiddos) > 2):
+                                    kiddos.data = kiddos.data[3]
+                    elif (TreeIn.data[1] == '^'):
+                                TreeIn.data = '|'
+                                TreeIn.children = list(TreeIn.children[0].children)
+                                for kiddos in TreeIn.children:
+                                    if (kiddos.data[0] == "~") and (kiddos.data[1] == "~") and (len(kiddos) > 2):
+                                        kiddos.data = kiddos.data[3]
+            else:
+                if (TreeIn.children[0].data == '|'):
+                        TreeIn.data = '^'
+                        TreeIn.children = list(TreeIn.children[0].children)
+                        for kiddos in TreeIn.children:
+                            kiddos.data = "~"+kiddos.data
+                            if (kiddos.data[0] == "~") and (kiddos.data[1] == "~") and (len(kiddos) > 2):
+                                kiddos.data = kiddos.data[3]
+                elif (TreeIn.children[0].data == '^'):
+                        TreeIn.data = '|'
+                        TreeIn.children = list(TreeIn.children[0].children)
+                        for kiddos in TreeIn.children:
+                            kiddos.data = "~"+kiddos.data
+                            if (kiddos.data[0] == "~") and (kiddos.data[1] == "~") and (len(kiddos) > 2):
+                                kiddos.data = kiddos.data[3]
+    return TreeIn
+
+
 
 def removeIFF(returnTree):
         nodes = returnTree
@@ -163,11 +304,11 @@ def removeIFF(returnTree):
             alpha = nodes.children[0];
             beta = nodes.children[1];
             Left = (Tree('>'))
-            Left.children.append((alpha))
-            Left.children.append((beta))
+            Left.children.append((Tree(alpha.data, list(alpha.children))))
+            Left.children.append((Tree(beta.data, list(beta.children))))
             Right = (Tree('>'))
-            Right.children.append((beta))
-            Right.children.append((alpha))
+            Right.children.append((Tree(beta.data, list(beta.children))))
+            Right.children.append((Tree(alpha.data, list(alpha.children))))
             returnTree.data = "^"
             returnTree.children[0] = Left
             returnTree.children[1] = Right
@@ -187,17 +328,29 @@ def printTree(node, level=0):
                 print(' ' * 4 * level + '  ' + node.data)
                 printTree(node.children[1], level + 1)
 
-  
+
         
 def main():
-    #inputString = input("Input Sentence: ")
-    postFix = infixToPostfix(remove("~(~A>B)"))
+    inputString = input("Input Sentence: ")
+    postFix = infixToPostfix(remove(inputString))
     postFixTree = postfixToTree(postFix)
+    print("------------ Initial Input ---------------")
     printTree(postFixTree[-1])
-    # postfixToTreeIFF = TreeTraversalIFF(postFixTree[-1])
-    postfixToTreeIMP = TreeTraversalIMP(postFixTree[-1])
+    postfixToTreeIFF = TreeTraversalIFF(postFixTree[-1])
+    print("----------- Replace IFF -----------------")
+    printTree(postfixToTreeIFF)
+    postfixToTreeIMP = TreeTraversalIMP(postfixToTreeIFF)
+    print("------------ Replace -> ----------------------")
     printTree(postfixToTreeIMP)
-    
+    postfixToTreeNEG = TreeTraversalNEG(postfixToTreeIMP)
+    postfixToTreeNEG = TreeTraversalNEG(postfixToTreeIMP)
+    postfixToTreeNEG = TreeTraversalNEG(postfixToTreeIMP)
+    print("--------------Propagate Negation -----------------------")
+    printTree(postfixToTreeNEG)
+    print("---------------- Distribute OR over AND -----------------")
+    postfixToTreeOR = DistributeOR(postfixToTreeIMP)
+    printTree(postfixToTreeOR)
+    print("Final in CNF")
 if __name__ == '__main__':
     main()
                 
